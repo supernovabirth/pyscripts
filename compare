@@ -1,45 +1,51 @@
 import pandas as pd
 
-def compare_excel_sheets(sheet_a_path, sheet_b_path):
+def read_excel_and_compare(sheet_a_path, sheet_b_path):
     # Read Excel sheets into Pandas DataFrames
     df_a = pd.read_excel(sheet_a_path)
     df_b = pd.read_excel(sheet_b_path)
-
-    # Convert DataFrames to dictionaries for easier comparison
-    dict_a = df_a.to_dict(orient='records')
-    dict_b = df_b.to_dict(orient='records')
-
-    # Check for missing companies or companies in B but not in A
-    missing_in_b = [company for company in dict_a if company not in dict_b]
-    extra_in_b = [company for company in dict_b if company not in dict_a]
-
-    # Initialize a list to store the differences
-    differences = []
-
-    # Compare other attributes
-    for company_a in dict_a:
-        for company_b in dict_b:
-            if company_a['ID'] == company_b['ID']:
-                # Compare other attributes
-                for key, value in company_a.items():
-                    if key != 'ID' and company_b[key] != value:
-                        differences.append(f"Attribute '{key}' differs for Company ID {company_a['ID']}: "
-                                           f"A: {value}, B: {company_b[key]}")
-                break
-
-    return missing_in_b, extra_in_b, differences
+    
+    # Add values of COMPANY_ID from sheet A to a dictionary
+    company_id_map_a = {}
+    duplicates_a = set()
+    for company_id in df_a['COMPANY_ID']:
+        if company_id in company_id_map_a:
+            duplicates_a.add(company_id)
+        else:
+            company_id_map_a[company_id] = True
+    
+    # Add values of COMPANY_ID from sheet B to a dictionary
+    company_id_map_b = {}
+    duplicates_b = set()
+    for company_id in df_b['COMPANY_ID']:
+        if company_id in company_id_map_b:
+            duplicates_b.add(company_id)
+        else:
+            company_id_map_b[company_id] = True
+    
+    # Check if the total number of unique values of COMPANY_ID in sheet A matches sheet B
+    if len(company_id_map_a) != len(company_id_map_b):
+        print("Number of unique COMPANY_ID values in sheet A does not match sheet B")
+        missing_in_a = [company_id for company_id in company_id_map_b if company_id not in company_id_map_a]
+        extra_in_a = [company_id for company_id in company_id_map_a if company_id not in company_id_map_b]
+        print("Missing in sheet A:", missing_in_a)
+        print("Extra in sheet A:", extra_in_a)
+    else:
+        print("Number of unique COMPANY_ID values in sheet A matches sheet B")
+    
+    # Check for duplicate COMPANY_ID values in sheet A
+    if duplicates_a:
+        print("Duplicate COMPANY_ID values in sheet A:", duplicates_a)
+    else:
+        print("No duplicate COMPANY_ID values in sheet A")
+    
+    # Check for duplicate COMPANY_ID values in sheet B
+    if duplicates_b:
+        print("Duplicate COMPANY_ID values in sheet B:", duplicates_b)
+    else:
+        print("No duplicate COMPANY_ID values in sheet B")
 
 # Example usage
 sheet_a_path = 'path/to/sheet_a.xlsx'
 sheet_b_path = 'path/to/sheet_b.xlsx'
-
-missing_in_b, extra_in_b, differences = compare_excel_sheets(sheet_a_path, sheet_b_path)
-
-# Print the results
-print("Companies missing in sheet B:")
-print(missing_in_b)
-print("\nCompanies extra in sheet B:")
-print(extra_in_b)
-print("\nDifferences in attributes:")
-for diff in differences:
-    print(diff)
+read_excel_and_compare(sheet_a_path, sheet_b_path)
