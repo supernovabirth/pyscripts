@@ -55,4 +55,6 @@ def read_excel_and_compare(sheet_a_path, sheet_b_path, output_file):
 
 # Example usage
 sheet_a_path = 'path/to/sheet_a.xlsx'
-sheet_b_path = 'pat
+sheet_b_path = 'path/to/sheet_b.xlsx'
+output_file = 'differences.txt'
+read_excel_and_compare(sheet_a_path, sheet_b_path, output_file)
