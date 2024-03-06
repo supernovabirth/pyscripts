@@ -11,6 +11,12 @@ def read_excel_and_compare(sheet_a_path, sheet_b_path, output_file):
     # Track missing columns
     missing_columns = set()
     
+    # Track columns with differences
+    different_columns = set()
+    
+    # Track values present in one sheet but empty in the other
+    empty_values = {'A': {}, 'B': {}}
+    
     # Iterate over rows in dataframe A
     for index, row_a in df_a.iterrows():
         company_id = row_a['COMPANY_ID']
@@ -38,6 +44,11 @@ def read_excel_and_compare(sheet_a_path, sheet_b_path, output_file):
             if value_a != value_b:
                 differences.append(f"Difference in {column} for COMPANY_ID {company_id}: "
                                    f"Sheet A: {value_a}, Sheet B: {value_b}")
+                different_columns.add(column)
+            if pd.isna(value_a) and not pd.isna(value_b):
+                empty_values['A'].setdefault(column, []).append(company_id)
+            elif not pd.isna(value_a) and pd.isna(value_b):
+                empty_values['B'].setdefault(column, []).append(company_id)
     
     # Iterate over columns in dataframe B to check for extra columns in B
     for column in df_b.columns:
@@ -52,6 +63,13 @@ def read_excel_and_compare(sheet_a_path, sheet_b_path, output_file):
     with open(output_file, 'w') as f:
         for diff in differences:
             f.write(diff + '\n')
+        f.write("\nColumns with differences:\n")
+        for column in different_columns:
+            f.write(column + '\n')
+        f.write("\nValues present in one sheet but empty in the other:\n")
+        for sheet, values in empty_values.items():
+            for column, ids in values.items():
+                f.write(f"In sheet {sheet}, column '{column}' has empty values for COMPANY_IDs: {', '.join(map(str, ids))}\n")
 
 # Example usage
 sheet_a_path = 'path/to/sheet_a.xlsx'
